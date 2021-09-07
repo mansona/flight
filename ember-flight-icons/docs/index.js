@@ -1,6 +1,7 @@
-import Controller from '@ember/controller';
-import { action, set } from '@ember/object';
+import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
+import { getOwner } from '@ember/application';
 
 const defaultSize = '24';
 
@@ -16,7 +17,31 @@ const checkIsShown = function (searchText, meta) {
   return false;
 };
 
-export default class IndexController extends Controller {
+export default class IndexComponent extends Component {
+  get contextRootURL() {
+    const config = getOwner(this).resolveRegistration('config:environment');
+    return config.rootURL || '/';
+  }
+
+  @tracked model;
+
+  constructor() {
+    super(...arguments);
+    fetch(
+      `${this.contextRootURL}@hashicorp/ember-flight-icons/icons/_catalog.json`
+    ).then(async (response) => {
+      const json = await response.json();
+
+      this.model = json.map(({ Name, Size }) => {
+        return {
+          name: `${Name}`,
+          size: `${Size}`,
+          searchable: `${Name}`,
+        };
+      });
+    });
+  }
+
   @tracked selectedIcon = 'auto-apply';
   @tracked size = '24';
   @tracked color = 'currentColor';
